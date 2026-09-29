@@ -66,7 +66,35 @@ function renderGallery(items) {
       details.append(description);
     }
 
-    card.append(media, details);
+    // add admin delete button if the user is signed in
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.type = 'button';
+    deleteBtn.title = 'Delete this item';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.hidden = !loginForm.hidden; // visible only when logged in
+    deleteBtn.addEventListener('click', async () => {
+      if (!confirm('Delete this gallery item? This removes the media file and the database record.')) return;
+      setStatus('Deleting item...', '');
+      try {
+        // delete storage object then row
+        const { error: delStorageErr } = await client.storage.from('cakes').remove([item.media_path]);
+        if (delStorageErr) throw delStorageErr;
+        const { error: delRowErr } = await client.from('cakes').delete().eq('id', item.id);
+        if (delRowErr) throw delRowErr;
+        setStatus('Item deleted', 'success');
+        await loadGallery();
+      } catch (err) {
+        console.error('Delete failed:', err);
+        setStatus('Delete failed: ' + (err.message || 'Try again'), 'error');
+      }
+    });
+
+    const actionWrap = document.createElement('div');
+    actionWrap.className = 'gallery-actions';
+    actionWrap.append(deleteBtn);
+
+    card.append(media, details, actionWrap);
     gallery.append(card);
   }
 }
