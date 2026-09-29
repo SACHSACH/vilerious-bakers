@@ -1,101 +1,30 @@
-# Vilerious Bakers - Gallery Upload Setup Guide
+# Supabase cake gallery setup
 
-You now have an image/video gallery system with admin upload functionality!
+The site is configured to use Supabase project storage and database tables. The browser uses the project's publishable key; it does not use a service-role or secret key.
 
-## Two Ways to Use the Gallery
+## 1. Secure admin authentication
 
-### Option 1: LocalStorage (No Setup Required - Quick Testing)
-The gallery works immediately with browser LocalStorage. Images/videos uploaded are stored locally in your browser only.
+In the Supabase dashboard for this project:
 
-- **Admin Password:** `vilerious2024`
-- **How to test:** Navigate to `#admin` section, enter password, upload images/videos
-- **Limitation:** Data only persists in your browser; won't sync across devices
+1. Open **Authentication → Settings** and disable public sign-ups. This is important: authenticated users are allowed to upload.
+2. Open **Authentication → Users** and add a user for the bakery administrator. Set a new, unique password in the dashboard; do not reuse a password that has been shared in chat or elsewhere.
+3. Keep your account recovery email current and enable multi-factor authentication if available.
 
-### Option 2: Supabase (Recommended for Production)
-Set up free Supabase to store images/videos in the cloud and sync across devices.
+The login in the website's **Manage the cake gallery** section uses this Supabase Auth account. A Supabase dashboard login linked to GitHub is separate from a website Auth user.
 
-## Setting Up Supabase (Free)
+## 2. Create the gallery table and storage bucket
 
-1. **Create a Supabase account:**
-   - Go to [https://supabase.com](https://supabase.com)
-   - Sign up with email or GitHub
-   - Create a new project (free tier available)
+Open **SQL Editor**, create a query, paste the contents of [`supabase/setup.sql`](./supabase/setup.sql), and run it. This creates the `cakes` table, a public-read `cakes` storage bucket, and row-level security policies. Visitors can view the gallery; uploads require a signed-in Supabase Auth user.
 
-2. **Create a database table:**
-   - In Supabase dashboard, go to **SQL Editor**
-   - Run this query:
-   ```sql
-   CREATE TABLE cakes (
-     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-     name TEXT NOT NULL,
-     description TEXT,
-     media_url TEXT NOT NULL,
-     media_type TEXT NOT NULL,
-     created_at TIMESTAMP DEFAULT NOW()
-   );
-   ```
+## 3. Upload and manage items
 
-3. **Create storage bucket:**
-   - Go to **Storage** in Supabase
-   - Create a bucket named `cakes`
-   - Set it to public (allow public file access)
+Sign in to the live website from its gallery management section, then upload an image or video with a name and optional description. Supported formats are JPG, PNG, WebP, GIF, MP4, and WebM. The maximum upload size is 50 MB.
 
-4. **Get your credentials:**
-   - Go to **Settings > API**
-   - Copy your `Project URL` and `Anon Key`
+Uploaded media is public because it is displayed on the public website. Do not upload private images or videos.
 
-5. **Update your site's `config.js`:**
-   ```javascript
-   const SUPABASE_URL = 'https://your-project.supabase.co';
-   const SUPABASE_KEY = 'your-anon-key-here';
-   const ADMIN_PASSWORD = 'vilerious2024'; // Change to a strong password
-   ```
+## Security
 
-6. **Commit and push to GitHub:**
-   ```bash
-   git add config.js
-   git commit -m "Configure Supabase credentials"
-   git push
-   ```
-
-## Using the Admin Panel
-
-1. Scroll to the **Admin Panel** section at the bottom of the site
-2. Enter the admin password
-3. Fill in cake details (name, description)
-4. Upload an image or video (max 50MB)
-5. Click "Upload to Gallery"
-6. The cake will appear in the gallery immediately!
-
-## Security Notes
-
-- **Change the admin password** in `config.js` to something only you know
-- **Keep your Supabase URL and key private** – don't commit them to GitHub publicly
-- If you accidentally expose credentials, regenerate them in Supabase settings
-- Supabase free tier includes 500MB storage and 2GB bandwidth/month
-
-## Supported Formats
-
-- **Images:** JPG, PNG, WebP, GIF
-- **Videos:** MP4, WebM
-- **Max file size:** 50MB
-
-## Troubleshooting
-
-- **Gallery not loading?** Check browser console (F12 → Console) for errors
-- **Upload fails?** Make sure your Supabase bucket is public and credentials are correct
-- **Password not working?** Verify the exact password in `config.js`
-
-## File Size Tips
-
-- Resize images to ~1200px width before uploading (faster loading)
-- Compress videos to ~5-10MB (use tools like HandBrake or FFmpeg)
-- Larger files = slower gallery for visitors on mobile
-
-## Next Steps
-
-- Customize `ADMIN_PASSWORD` in `config.js`
-- Add more styles to `.gallery-item` in `styles.css` if you want custom gallery look
-- Set up a domain (you started this earlier with DigitalPlat)
-
-Questions? Check [Supabase docs](https://supabase.com/docs) for cloud storage setup.
+- The project URL and publishable key in `config.js` are intended for browser use. Row-level security and storage policies protect writes.
+- Never put a Supabase `service_role` or secret key in this static website or commit one to GitHub.
+- Keep public sign-ups disabled so visitors cannot create accounts and use authenticated upload policies.
+- The gallery uses Supabase Auth sessions for sign-in and sign-out; the former browser-only password and localStorage gallery have been removed.

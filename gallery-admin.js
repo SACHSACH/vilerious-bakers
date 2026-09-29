@@ -1,253 +1,21 @@
-// Gallery & Admin Panel Script with Supabase Integration
-
-let supabase = null;
-let isAuthenticated = false;
-
-// Initialize Supabase when page loads
-async function initSupabase() {
-  if (typeof window.supabase === 'undefined') {
-    console.log('Supabase library not loaded yet');
-    setTimeout(initSupabase, 500);
-    return;
-  }
-
-  const { createClient } = window.supabase;
-  
-  // Get credentials from config or environment
-  const url = window.SUPABASE_URL || localStorage.getItem('supabase_url');
-  const key = window.SUPABASE_KEY || localStorage.getItem('supabase_key');
-  
-  if (!url || !key) {
-    console.log('Supabase credentials not configured. Admin panel disabled.');
-    document.getElementById('admin-panel').style.display = 'none';
-    loadGalleryFromLocal();
-    return;
-  }
-  
-  supabase = createClient(url, key);
-  setupGallery();
-  setupAdmin();
-}
-
-// Load gallery from localStorage (fallback)
-async function loadGalleryFromLocal() {
-  const gallery = document.getElementById('gallery-container');
-  const galleryEmpty = document.getElementById('gallery-empty');
-  
-  const items = JSON.parse(localStorage.getItem('cakeGallery') || '[]');
-  
-  if (items.length === 0) {
-    galleryEmpty.style.display = 'block';
-    return;
-  }
-  
-  galleryEmpty.style.display = 'none';
-  gallery.innerHTML = '';
-  
-  items.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'gallery-item';
-    
-    let media = '';
-    if (item.type === 'image') {
-      media = `<img src="${item.url}" alt="${item.name}" loading="lazy" />`;
-    } else {
-      media = `<video controls><source src="${item.url}" /></video>`;
-    }
-    
-    div.innerHTML = `
-      ${media}
-      <div class="gallery-item-info">
-        <h4>${item.name}</h4>
-        <p>${item.description}</p>
-      </div>
-    `;
-    
-    gallery.appendChild(div);
-  });
-}
-
-// Setup gallery with Supabase
-async function setupGallery() {
-  if (!supabase) {
-    loadGalleryFromLocal();
-    return;
-  }
-  
-  const { data, error } = await supabase
-    .from('cakes')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    console.error('Error loading gallery:', error);
-    loadGalleryFromLocal();
-    return;
-  }
-  
-  const gallery = document.getElementById('gallery-container');
-  const galleryEmpty = document.getElementById('gallery-empty');
-  
-  if (!data || data.length === 0) {
-    galleryEmpty.style.display = 'block';
-    return;
-  }
-  
-  galleryEmpty.style.display = 'none';
-  gallery.innerHTML = '';
-  
-  data.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'gallery-item';
-    
-    let media = '';
-    if (item.media_type === 'image') {
-      media = `<img src="${item.media_url}" alt="${item.name}" loading="lazy" />`;
-    } else {
-      media = `<video controls><source src="${item.media_url}" /></video>`;
-    }
-    
-    div.innerHTML = `
-      ${media}
-      <div class="gallery-item-info">
-        <h4>${item.name}</h4>
-        <p>${item.description}</p>
-      </div>
-    `;
-    
-    gallery.appendChild(div);
-  });
-}
-
-// Setup admin panel
-function setupAdmin() {
-  const passwordInput = document.getElementById('admin-password');
-  const uploadFields = document.getElementById('upload-fields');
-  const uploadBtn = document.getElementById('upload-btn');
-  const fileInput = document.getElementById('file-input');
-  const statusDiv = document.getElementById('upload-status');
-  
-  // Unlock upload form when password is entered
-  passwordInput.addEventListener('input', (e) => {
-    if (e.target.value === window.ADMIN_PASSWORD) {
-      uploadFields.style.display = 'block';
-      e.target.disabled = true;
-      e.target.value = '✓ Unlocked';
-    }
-  });
-  
-  // Handle upload
-  uploadBtn.addEventListener('click', async () => {
-    const name = document.getElementById('cake-name').value;
-    const description = document.getElementById('cake-description').value;
-    const file = fileInput.files[0];
-    
-    if (!name || !description || !file) {
-      setStatus('Please fill in all fields', 'error');
-      return;
-    }
-    
-    if (file.size > 50 * 1024 * 1024) {
-      setStatus('File is too large (max 50MB)', 'error');
-      return;
-    }
-    
-    uploadBtn.disabled = true;
-    setStatus('Uploading...', '');
-    
-    try {
-      if (!supabase) {
-        // Save to localStorage if Supabase not available
-        const item = {
-          name,
-          description,
-          url: URL.createObjectURL(file),
-          type: file.type.startsWith('image') ? 'image' : 'video'
-        };
-        const gallery = JSON.parse(localStorage.getItem('cakeGallery') || '[]');
-        gallery.unshift(item);
-        localStorage.setItem('cakeGallery', JSON.stringify(gallery));
-        
-        setStatus('✓ Cake added to gallery!', 'success');
-        clearForm();
-        loadGalleryFromLocal();
-      } else {
-        // Upload to Supabase
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        const filePath = `cakes/${fileName}`;
-        
-        // Upload file
-        const { error: uploadError } = await supabase.storage
-          .from('cakes')
-          .upload(filePath, file);
-        
-        if (uploadError) throw uploadError;
-        
-        // Get public URL
-        const { data } = supabase.storage.from('cakes').getPublicUrl(filePath);
-        const mediaUrl = data.publicUrl;
-        
-        // Save metadata to database
-        const { error: insertError } = await supabase
-          .from('cakes')
-          .insert([{
-            name,
-            description,
-            media_url: mediaUrl,
-            media_type: file.type.startsWith('image') ? 'image' : 'video'
-          }]);
-        
-        if (insertError) throw insertError;
-        
-        setStatus('✓ Cake added to gallery!', 'success');
-        clearForm();
-        setupGallery();
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      setStatus('Error uploading cake. Try again.', 'error');
-    } finally {
-      uploadBtn.disabled = false;
-    }
-  });
-  
-  function setStatus(message, type) {
-    statusDiv.textContent = message;
-    statusDiv.className = type ? `${type}` : '';
-  }
-  
-  function clearForm() {
-    document.getElementById('cake-name').value = '';
-    document.getElementById('cake-description').value = '';
-    fileInput.value = '';
-  }
-}
-
-// Mobile menu toggle (from original script)
 const menuToggle = document.querySelector(".menu-toggle");
 const siteNav = document.querySelector("#site-nav");
+const gallery = document.querySelector("#gallery-container");
+const galleryEmpty = document.querySelector("#gallery-empty");
+const loginForm = document.querySelector("#admin-login");
+const adminSession = document.querySelector("#admin-session");
+const uploadForm = document.querySelector("#upload-form");
+const statusMessage = document.querySelector("#upload-status");
+const maxFileSize = 50 * 1024 * 1024;
+const allowedTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "video/mp4",
+  "video/webm",
+]);
 
-if (menuToggle) {
-  menuToggle.addEventListener("click", () => {
-    const isExpanded = menuToggle.getAttribute("aria-expanded") === "true";
-    menuToggle.setAttribute("aria-expanded", String(!isExpanded));
-    menuToggle.setAttribute("aria-label", isExpanded ? "Open navigation" : "Close navigation");
-    siteNav.classList.toggle("is-open", !isExpanded);
-  });
-}
-
-if (siteNav) {
-  siteNav.addEventListener("click", (event) => {
-    if (event.target.closest("a")) {
-      menuToggle.setAttribute("aria-expanded", "false");
-      menuToggle.setAttribute("aria-label", "Open navigation");
-      siteNav.classList.remove("is-open");
-    }
-  });
-}
-
-// Reviews carousel (from original script)
 const reviews = [
   {
     text: "A lovely cake is more than dessert. It's a little centrepiece for a moment you want to remember.",
@@ -264,30 +32,219 @@ const reviews = [
 ];
 
 let currentReview = 0;
-const quoteText = document.querySelector("#quote-text");
-const quoteAuthor = document.querySelector("#quote-author");
-const quoteCount = document.querySelector("#quote-count");
+
+function setStatus(message, type = "") {
+  statusMessage.textContent = message;
+  statusMessage.className = type;
+}
+
+function renderGallery(items) {
+  gallery.replaceChildren();
+  galleryEmpty.hidden = items.length > 0;
+
+  for (const item of items) {
+    const card = document.createElement("article");
+    card.className = "gallery-item";
+
+    const media = item.media_type === "image"
+      ? document.createElement("img")
+      : document.createElement("video");
+    media.src = item.media_url;
+    media.alt = item.media_type === "image" ? item.name : `Video: ${item.name}`;
+    media.loading = "lazy";
+    if (item.media_type === "video") media.controls = true;
+
+    const details = document.createElement("div");
+    details.className = "gallery-item-info";
+    const name = document.createElement("h4");
+    name.textContent = item.name;
+    details.append(name);
+
+    if (item.description) {
+      const description = document.createElement("p");
+      description.textContent = item.description;
+      details.append(description);
+    }
+
+    card.append(media, details);
+    gallery.append(card);
+  }
+}
+
+function getFileExtension(file) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (extension && /^[a-z0-9]{1,10}$/.test(extension)) return extension;
+  return file.type.startsWith("image/") ? "jpg" : "mp4";
+}
+
+function setAdminState(session) {
+  const signedIn = Boolean(session);
+  loginForm.hidden = signedIn;
+  adminSession.hidden = !signedIn;
+  uploadForm.hidden = !signedIn;
+  document.querySelector("#admin-email-display").textContent = session?.user.email ?? "";
+  if (!signedIn) loginForm.reset();
+}
 
 function showReview(direction) {
   currentReview = (currentReview + direction + reviews.length) % reviews.length;
   const review = reviews[currentReview];
-  quoteText.textContent = review.text;
-  quoteAuthor.innerHTML = `${review.author} <span>· Our promise</span>`;
-  quoteCount.innerHTML = `${String(currentReview + 1).padStart(2, "0")} <i>/</i> ${String(reviews.length).padStart(2, "0")}`;
+  document.querySelector("#quote-text").textContent = review.text;
+  document.querySelector("#quote-author").innerHTML = `${review.author} <span>· Our promise</span>`;
+  document.querySelector("#quote-count").innerHTML =
+    `${String(currentReview + 1).padStart(2, "0")} <i>/</i> ${String(reviews.length).padStart(2, "0")}`;
 }
 
-if (document.querySelector("#quote-prev")) {
-  document.querySelector("#quote-prev").addEventListener("click", () => showReview(-1));
-}
-if (document.querySelector("#quote-next")) {
-  document.querySelector("#quote-next").addEventListener("click", () => showReview(1));
+async function startGallery() {
+  const config = window.VILERIOUS_SUPABASE_CONFIG;
+  if (!config?.url || !config?.publishableKey || !window.supabase?.createClient) {
+    galleryEmpty.hidden = false;
+    galleryEmpty.textContent = "The cake gallery is temporarily unavailable.";
+    setStatus("Supabase is not configured. Check config.js and reload.", "error");
+    return;
+  }
+
+  const client = window.supabase.createClient(config.url, config.publishableKey);
+
+  async function loadGallery() {
+    const { data, error } = await client
+      .from("cakes")
+      .select("id, name, description, media_url, media_type, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Could not load the cake gallery:", error);
+      gallery.replaceChildren();
+      galleryEmpty.hidden = false;
+      galleryEmpty.textContent = "The cake gallery could not be loaded. Please try again later.";
+      setStatus(`Could not load gallery: ${error.message}`, "error");
+      return;
+    }
+
+    renderGallery(data ?? []);
+  }
+
+  client.auth.onAuthStateChange((_event, session) => {
+    setAdminState(session);
+  });
+
+  const { data: sessionData, error: sessionError } = await client.auth.getSession();
+  if (sessionError) {
+    console.error("Could not check the admin session:", sessionError);
+    setStatus(`Could not check sign-in status: ${sessionError.message}`, "error");
+  }
+  setAdminState(sessionData?.session ?? null);
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = document.querySelector("#login-btn");
+    button.disabled = true;
+    setStatus("Signing in…");
+
+    const { error } = await client.auth.signInWithPassword({
+      email: document.querySelector("#admin-email").value.trim(),
+      password: document.querySelector("#admin-password").value,
+    });
+    button.disabled = false;
+
+    if (error) {
+      setStatus(`Sign-in failed: ${error.message}`, "error");
+      return;
+    }
+    loginForm.reset();
+    setStatus("Signed in. You can now upload gallery items.", "success");
+  });
+
+  document.querySelector("#logout-btn").addEventListener("click", async () => {
+    const { error } = await client.auth.signOut();
+    if (error) {
+      console.error("Could not sign out:", error);
+      setStatus(`Sign-out failed: ${error.message}`, "error");
+      return;
+    }
+    setStatus("You have signed out.", "success");
+  });
+
+  uploadForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = document.querySelector("#upload-btn");
+    const file = document.querySelector("#file-input").files[0];
+    const name = document.querySelector("#cake-name").value.trim();
+    const description = document.querySelector("#cake-description").value.trim();
+
+    if (!file || !name) {
+      setStatus("Enter a cake name and select a photo or video.", "error");
+      return;
+    }
+    if (!allowedTypes.has(file.type)) {
+      setStatus("Choose a JPG, PNG, WebP, GIF, MP4, or WebM file.", "error");
+      return;
+    }
+    if (file.size > maxFileSize) {
+      setStatus("This file is over the 50 MB upload limit.", "error");
+      return;
+    }
+
+    button.disabled = true;
+    setStatus("Uploading your cake…");
+    const mediaType = file.type.startsWith("image/") ? "image" : "video";
+    const filePath = `${crypto.randomUUID()}.${getFileExtension(file)}`;
+    let uploaded = false;
+
+    try {
+      const { error: uploadError } = await client.storage
+        .from("cakes")
+        .upload(filePath, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+      uploaded = true;
+
+      const { data: publicUrlData } = client.storage.from("cakes").getPublicUrl(filePath);
+      const { error: insertError } = await client.from("cakes").insert({
+        name,
+        description,
+        media_url: publicUrlData.publicUrl,
+        media_path: filePath,
+        media_type: mediaType,
+      });
+      if (insertError) throw insertError;
+
+      uploadForm.reset();
+      setStatus("Cake uploaded and added to the gallery.", "success");
+      await loadGallery();
+    } catch (error) {
+      console.error("Cake upload failed:", error);
+      if (uploaded) {
+        const { error: cleanupError } = await client.storage.from("cakes").remove([filePath]);
+        if (cleanupError) console.error("Could not clean up the uploaded file:", cleanupError);
+      }
+      setStatus(`Upload failed: ${error.message || "Please try again."}`, "error");
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  await loadGallery();
 }
 
+if (menuToggle && siteNav) {
+  menuToggle.addEventListener("click", () => {
+    const isExpanded = menuToggle.getAttribute("aria-expanded") === "true";
+    menuToggle.setAttribute("aria-expanded", String(!isExpanded));
+    menuToggle.setAttribute("aria-label", isExpanded ? "Open navigation" : "Close navigation");
+    siteNav.classList.toggle("is-open", !isExpanded);
+  });
+
+  siteNav.addEventListener("click", (event) => {
+    if (event.target.closest("a")) {
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.setAttribute("aria-label", "Open navigation");
+      siteNav.classList.remove("is-open");
+    }
+  });
+}
+
+document.querySelector("#quote-prev")?.addEventListener("click", () => showReview(-1));
+document.querySelector("#quote-next")?.addEventListener("click", () => showReview(1));
 document.querySelector("#year").textContent = new Date().getFullYear();
 
-// Initialize everything when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initSupabase);
-} else {
-  initSupabase();
-}
+startGallery();

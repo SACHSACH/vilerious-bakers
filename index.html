@@ -201,30 +201,41 @@
 
       <section class="admin-panel section-wrap" id="admin">
         <div class="admin-content">
-          <h2>Admin Panel: Upload Cake Photos & Videos</h2>
-          <p class="admin-note">Password required to upload. Update your gallery whenever you have new creations.</p>
+          <h2>Manage the cake gallery</h2>
+          <p class="admin-note">Sign in with your Supabase admin account to upload cake photos and videos.</p>
           <div class="upload-form">
-            <div class="form-group">
-              <label for="admin-password">Admin Password:</label>
-              <input type="password" id="admin-password" placeholder="Enter password to unlock" />
+            <form id="admin-login">
+              <div class="form-group">
+                <label for="admin-email">Admin email</label>
+                <input type="email" id="admin-email" autocomplete="username" required />
+              </div>
+              <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input type="password" id="admin-password" autocomplete="current-password" required />
+              </div>
+              <button id="login-btn" class="button button-light" type="submit">Sign in</button>
+            </form>
+            <div id="admin-session" hidden>
+              <p class="admin-note">Signed in as <span id="admin-email-display"></span></p>
+              <button id="logout-btn" class="admin-logout" type="button">Sign out</button>
             </div>
-            <div id="upload-fields" style="display: none;">
+            <form id="upload-form" hidden>
               <div class="form-group">
-                <label for="cake-name">Cake Name:</label>
-                <input type="text" id="cake-name" placeholder="e.g., Strawberry Dream Cake" />
+                <label for="cake-name">Cake name</label>
+                <input type="text" id="cake-name" maxlength="100" required />
               </div>
               <div class="form-group">
-                <label for="cake-description">Description:</label>
-                <textarea id="cake-description" placeholder="e.g., Fresh strawberries with vanilla cream"></textarea>
+                <label for="cake-description">Description</label>
+                <textarea id="cake-description" maxlength="500"></textarea>
               </div>
               <div class="form-group">
-                <label for="file-input">Upload Image or Video (max 50MB):</label>
-                <input type="file" id="file-input" accept="image/*,video/*" />
-                <small>Supported: JPG, PNG, WebP, MP4, WebM</small>
+                <label for="file-input">Cake photo or video (up to 50 MB)</label>
+                <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" required />
+                <small>Supported: JPG, PNG, WebP, GIF, MP4 and WebM</small>
               </div>
-              <button id="upload-btn" class="button button-light">Upload to Gallery</button>
-            </div>
-            <p id="upload-status"></p>
+              <button id="upload-btn" class="button button-light" type="submit">Upload to gallery</button>
+            </form>
+            <p id="upload-status" role="status" aria-live="polite"></p>
           </div>
         </div>
       </section>

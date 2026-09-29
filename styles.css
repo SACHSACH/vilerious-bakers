@@ -293,6 +293,8 @@ h2 { margin: 0; font-size: clamp(38px, 4vw, 52px); line-height: 1.12; }
 #upload-status { margin-top: 12px; font-size: 11px; font-weight: 600; min-height: 20px; }
 #upload-status.success { color: #2d7c3e; }
 #upload-status.error { color: #c41e3a; }
+.admin-logout { padding: 0; border: 0; background: none; color: var(--purple); text-decoration: underline; cursor: pointer; font-size: 11px; }
+[hidden] { display: none !important; }
 
 @media (min-width: 1441px) {
   .hero { padding-inline: max(7.5%, calc((100% - 1240px) / 2)); }
