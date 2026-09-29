@@ -16,7 +16,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
-    <script src="script.js" defer></script>
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="gallery-admin.js" defer></script>
   </head>
   <body>
     <div class="announcement">
@@ -126,6 +128,19 @@
         </div>
       </section>
 
+      <section class="gallery-section" id="gallery">
+        <div class="section-wrap">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow eyebrow-purple"><span></span> From our creations</p>
+              <h2>Gallery of our <em>latest cakes.</em></h2>
+            </div>
+          </div>
+          <div id="gallery-container" class="gallery-grid"></div>
+          <p class="menu-note" id="gallery-empty">No cakes in the gallery yet. Check back soon!</p>
+        </div>
+      </section>
+
       <section class="featured" id="cakes">
         <div class="section-wrap">
           <div class="section-heading featured-heading">
@@ -182,6 +197,36 @@
           <p class="whatsapp-number">WhatsApp: <a href="https://wa.me/254706884173" target="_blank" rel="noopener noreferrer">0706 884 173</a></p>
         </div>
         <div class="cta-image" role="img" aria-label="A decorated cake ready for a celebration"></div>
+      </section>
+
+      <section class="admin-panel section-wrap" id="admin">
+        <div class="admin-content">
+          <h2>Admin Panel: Upload Cake Photos & Videos</h2>
+          <p class="admin-note">Password required to upload. Update your gallery whenever you have new creations.</p>
+          <div class="upload-form">
+            <div class="form-group">
+              <label for="admin-password">Admin Password:</label>
+              <input type="password" id="admin-password" placeholder="Enter password to unlock" />
+            </div>
+            <div id="upload-fields" style="display: none;">
+              <div class="form-group">
+                <label for="cake-name">Cake Name:</label>
+                <input type="text" id="cake-name" placeholder="e.g., Strawberry Dream Cake" />
+              </div>
+              <div class="form-group">
+                <label for="cake-description">Description:</label>
+                <textarea id="cake-description" placeholder="e.g., Fresh strawberries with vanilla cream"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="file-input">Upload Image or Video (max 50MB):</label>
+                <input type="file" id="file-input" accept="image/*,video/*" />
+                <small>Supported: JPG, PNG, WebP, MP4, WebM</small>
+              </div>
+              <button id="upload-btn" class="button button-light">Upload to Gallery</button>
+            </div>
+            <p id="upload-status"></p>
+          </div>
+        </div>
       </section>
     </main>
 

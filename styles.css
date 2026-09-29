@@ -269,6 +269,31 @@ h2 { margin: 0; font-size: clamp(38px, 4vw, 52px); line-height: 1.12; }
 .footer-bottom { border-top: 1px solid var(--line); padding-top: 17px; display: flex; justify-content: space-between; color: var(--muted); font-size: 9px; }
 .footer-bottom a { color: var(--purple); }
 
+.gallery-section { padding: 96px 0 88px; background: #f1ecf3; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 30px; }
+.gallery-item { position: relative; overflow: hidden; border-radius: 4px; box-shadow: 0 4px 12px rgba(91,45,130,.1); transition: transform .3s; }
+.gallery-item:hover { transform: translateY(-4px); }
+.gallery-item img, .gallery-item video { width: 100%; height: 280px; object-fit: cover; display: block; }
+.gallery-item-info { padding: 12px; background: white; }
+.gallery-item-info h4 { margin: 0 0 4px; font-family: var(--serif); font-size: 14px; color: var(--ink); }
+.gallery-item-info p { margin: 0; font-size: 9px; color: var(--muted); }
+#gallery-empty { text-align: center; color: var(--muted); padding: 40px 20px; }
+
+.admin-panel { padding: 72px 0; background: #fafafe; margin-top: 60px; border-top: 2px solid var(--line); }
+.admin-panel h2 { margin-top: 0; font-family: var(--serif); color: var(--purple); }
+.admin-note { font-size: 12px; color: var(--muted); max-width: 500px; }
+.upload-form { max-width: 500px; padding: 24px; background: white; border: 1px solid var(--line); border-radius: 4px; }
+.form-group { margin-bottom: 18px; display: flex; flex-direction: column; }
+.form-group label { font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
+.form-group input, .form-group textarea { padding: 10px; border: 1px solid var(--line); border-radius: 3px; font-family: var(--sans); font-size: 12px; }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px rgba(91,45,130,.1); }
+.form-group small { font-size: 9px; color: var(--muted); margin-top: 4px; }
+#upload-btn { margin-top: 12px; }
+#upload-status { margin-top: 12px; font-size: 11px; font-weight: 600; min-height: 20px; }
+#upload-status.success { color: #2d7c3e; }
+#upload-status.error { color: #c41e3a; }
+
 @media (min-width: 1441px) {
   .hero { padding-inline: max(7.5%, calc((100% - 1240px) / 2)); }
 }
