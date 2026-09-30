@@ -80,15 +80,25 @@ function renderGallery(items, client, isAdmin, loadGallery) {
         deleteBtn.disabled = true;
         setStatus("Deleting item…");
         try {
+          const { data: deletedRows, error: rowError } = await client
+            .from("cakes")
+            .delete()
+            .eq("id", item.id)
+            .select("id");
+          if (rowError) throw rowError;
+          if (!deletedRows?.length) {
+            throw new Error("The gallery record was not deleted (it may already be gone). Check the delete policy, or run supabase/setup.sql in your Supabase SQL Editor, then reload.");
+          }
+
           const { error: storageError } = await client.storage
             .from("cakes")
             .remove([item.media_path]);
-          if (storageError) throw storageError;
-
-          const { error: rowError } = await client.from("cakes").delete().eq("id", item.id);
-          if (rowError) throw rowError;
-
-          setStatus("Item deleted.", "success");
+          if (storageError) {
+            console.error("Gallery item was removed, but its storage file could not be deleted:", storageError);
+            setStatus(`Removed from the gallery, but media cleanup failed: ${storageError.message}`, "error");
+          } else {
+            setStatus("Item deleted.", "success");
+          }
           await loadGallery();
         } catch (error) {
           console.error("Could not delete gallery item:", error);
