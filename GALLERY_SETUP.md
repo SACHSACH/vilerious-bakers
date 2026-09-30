@@ -14,11 +14,11 @@ The login in the website's **Manage the cake gallery** section uses this Supabas
 
 ## 2. Create the gallery table and storage bucket
 
-Open **SQL Editor**, create a query, paste the contents of [`supabase/setup.sql`](./supabase/setup.sql), and run it. This creates the `cakes` table, a public-read `cakes` storage bucket, and row-level security policies. Visitors can view the gallery; uploads require a signed-in Supabase Auth user.
+Open **SQL Editor**, create a query, paste the contents of [`supabase/setup.sql`](./supabase/setup.sql), and run it. This creates the `cakes` table, a public-read `cakes` storage bucket, and row-level security policies. Visitors can view the gallery; uploads and deletes require a signed-in Supabase Auth user. If the gallery is already set up, rerun this SQL to add the delete permissions.
 
 ## 3. Upload and manage items
 
-Sign in to the live website from its gallery management section, then upload an image or video with a name and optional description. Supported formats are JPG, PNG, WebP, GIF, MP4, and WebM. The maximum upload size is 50 MB.
+Sign in to the live website from its gallery management section, then upload an image or video with a name and optional description. Signed-in users also see a **Delete** button on each gallery item. Supported formats are JPG, PNG, WebP, GIF, MP4, and WebM. The maximum upload size is 50 MB.
 
 Uploaded media is public because it is displayed on the public website. Do not upload private images or videos.
 

@@ -38,7 +38,7 @@ function setStatus(message, type = "") {
   statusMessage.className = type;
 }
 
-function renderGallery(items) {
+function renderGallery(items, client, isAdmin, loadGallery) {
   gallery.replaceChildren();
   galleryEmpty.hidden = items.length > 0;
 
@@ -66,35 +66,40 @@ function renderGallery(items) {
       details.append(description);
     }
 
-    // add admin delete button if the user is signed in
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'delete-btn';
-    deleteBtn.type = 'button';
-    deleteBtn.title = 'Delete this item';
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.hidden = !loginForm.hidden; // visible only when logged in
-    deleteBtn.addEventListener('click', async () => {
-      if (!confirm('Delete this gallery item? This removes the media file and the database record.')) return;
-      setStatus('Deleting item...', '');
-      try {
-        // delete storage object then row
-        const { error: delStorageErr } = await client.storage.from('cakes').remove([item.media_path]);
-        if (delStorageErr) throw delStorageErr;
-        const { error: delRowErr } = await client.from('cakes').delete().eq('id', item.id);
-        if (delRowErr) throw delRowErr;
-        setStatus('Item deleted', 'success');
-        await loadGallery();
-      } catch (err) {
-        console.error('Delete failed:', err);
-        setStatus('Delete failed: ' + (err.message || 'Try again'), 'error');
-      }
-    });
+    card.append(media, details);
+    if (isAdmin) {
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.setAttribute("aria-label", `Delete ${item.name}`);
+      deleteBtn.addEventListener("click", async () => {
+        if (!confirm(`Delete "${item.name}" from the gallery? This also removes its media file.`)) return;
+        deleteBtn.disabled = true;
+        setStatus("Deleting item…");
+        try {
+          const { error: storageError } = await client.storage
+            .from("cakes")
+            .remove([item.media_path]);
+          if (storageError) throw storageError;
 
-    const actionWrap = document.createElement('div');
-    actionWrap.className = 'gallery-actions';
-    actionWrap.append(deleteBtn);
+          const { error: rowError } = await client.from("cakes").delete().eq("id", item.id);
+          if (rowError) throw rowError;
 
-    card.append(media, details, actionWrap);
+          setStatus("Item deleted.", "success");
+          await loadGallery();
+        } catch (error) {
+          console.error("Could not delete gallery item:", error);
+          setStatus(`Delete failed: ${error.message || "Please try again."}`, "error");
+          deleteBtn.disabled = false;
+        }
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "gallery-actions";
+      actions.append(deleteBtn);
+      card.append(actions);
+    }
     gallery.append(card);
   }
 }
@@ -133,11 +138,13 @@ async function startGallery() {
   }
 
   const client = window.supabase.createClient(config.url, config.publishableKey);
+  let galleryItems = [];
+  let isAdmin = false;
 
   async function loadGallery() {
     const { data, error } = await client
       .from("cakes")
-      .select("id, name, description, media_url, media_type, created_at")
+      .select("id, name, description, media_url, media_path, media_type, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -149,11 +156,14 @@ async function startGallery() {
       return;
     }
 
-    renderGallery(data ?? []);
+    galleryItems = data ?? [];
+    renderGallery(galleryItems, client, isAdmin, loadGallery);
   }
 
   client.auth.onAuthStateChange((_event, session) => {
+    isAdmin = Boolean(session);
     setAdminState(session);
+    renderGallery(galleryItems, client, isAdmin, loadGallery);
   });
 
   const { data: sessionData, error: sessionError } = await client.auth.getSession();
@@ -161,6 +171,7 @@ async function startGallery() {
     console.error("Could not check the admin session:", sessionError);
     setStatus(`Could not check sign-in status: ${sessionError.message}`, "error");
   }
+  isAdmin = Boolean(sessionData?.session);
   setAdminState(sessionData?.session ?? null);
 
   loginForm.addEventListener("submit", async (event) => {

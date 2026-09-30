@@ -19,6 +19,7 @@ create unique index if not exists cakes_media_path_unique_idx
 alter table public.cakes enable row level security;
 grant select on public.cakes to anon, authenticated;
 grant insert on public.cakes to authenticated;
+grant delete on public.cakes to authenticated;
 grant usage, select on sequence public.cakes_id_seq to authenticated;
 
 drop policy if exists "Anyone can view cakes" on public.cakes;
@@ -32,6 +33,12 @@ create policy "Signed-in admins can add cakes"
   on public.cakes for insert
   to authenticated
   with check (true);
+
+drop policy if exists "Signed-in admins can delete cakes" on public.cakes;
+create policy "Signed-in admins can delete cakes"
+  on public.cakes for delete
+  to authenticated
+  using (true);
 
 insert into storage.buckets (
   id,
