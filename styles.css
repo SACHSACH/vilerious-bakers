@@ -276,14 +276,17 @@ h2 { margin: 0; font-size: clamp(38px, 4vw, 52px); line-height: 1.12; }
 .gallery-item img, .gallery-item video { width: 100%; height: 280px; object-fit: cover; display: block; }
 .gallery-item-info { padding: 12px; background: white; }
 .gallery-actions { position: absolute; top: 10px; right: 10px; display:flex; gap:8px; }
-.delete-btn { background: rgba(255,255,255,0.95); color: var(--purple); border: 1px solid #f1e5f6; padding:6px 8px; border-radius:4px; cursor:pointer; font-size:12px; }
-.delete-btn:hover { background: white; box-shadow: 0 6px 20px rgba(91,45,130,.08); }
+.delete-btn { background: #fff; color: #a32142; border: 1px solid currentColor; padding: 9px 13px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; box-shadow: 0 2px 8px rgba(38,33,43,.2); }
+.delete-btn:hover { background: #a32142; color: #fff; }
+.delete-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.delete-btn:disabled { cursor: wait; opacity: .7; }
 .gallery-item-info h4 { margin: 0 0 4px; font-family: var(--serif); font-size: 14px; color: var(--ink); }
 .gallery-item-info p { margin: 0; font-size: 9px; color: var(--muted); }
 #gallery-empty { text-align: center; color: var(--muted); padding: 40px 20px; }
 
 .admin-panel { padding: 72px 0; background: #fafafe; margin-top: 60px; border-top: 2px solid var(--line); }
-.admin-panel h2 { margin-top: 0; font-family: var(--serif); color: var(--purple); }
+.admin-panel h1, .admin-panel h2 { margin-top: 0; font-family: var(--serif); color: var(--purple); }
+.admin-header { border-bottom: 1px solid var(--line); }
 .admin-note { font-size: 12px; color: var(--muted); max-width: 500px; }
 .upload-form { max-width: 500px; padding: 24px; background: white; border: 1px solid var(--line); border-radius: 4px; }
 .form-group { margin-bottom: 18px; display: flex; flex-direction: column; }

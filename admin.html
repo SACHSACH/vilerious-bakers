@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#5b2d82" />
+    <title>Gallery management | Vilerious Bakers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="gallery-admin.js" defer></script>
+  </head>
+  <body data-admin-page="true">
+    <div class="announcement">
+      <p>Vilerious Bakers <span aria-hidden="true">✦</span> Gallery management</p>
+    </div>
+
+    <header class="site-header admin-header">
+      <a class="brand" href="./" aria-label="Vilerious Bakers home">
+        <span class="brand-mark" aria-hidden="true">V</span>
+        <span class="brand-name">Vilerious <b>Bakers</b></span>
+      </a>
+      <a class="text-link" href="./">Return to website <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main>
+      <section class="admin-panel section-wrap" id="admin">
+        <div class="admin-content">
+          <p class="eyebrow eyebrow-purple"><span></span> Private management</p>
+          <h1>Manage the cake gallery</h1>
+          <p class="admin-note">Sign in with your Supabase admin account to upload or remove gallery items.</p>
+          <div class="upload-form">
+            <form id="admin-login">
+              <div class="form-group">
+                <label for="admin-email">Admin email</label>
+                <input type="email" id="admin-email" autocomplete="username" required />
+              </div>
+              <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input type="password" id="admin-password" autocomplete="current-password" required />
+              </div>
+              <button id="login-btn" class="button button-light" type="submit">Sign in</button>
+            </form>
+            <div id="admin-session" hidden>
+              <p class="admin-note">Signed in as <span id="admin-email-display"></span></p>
+              <button id="logout-btn" class="admin-logout" type="button">Sign out</button>
+            </div>
+            <form id="upload-form" hidden>
+              <div class="form-group">
+                <label for="cake-name">Cake name</label>
+                <input type="text" id="cake-name" maxlength="100" required />
+              </div>
+              <div class="form-group">
+                <label for="cake-description">Description</label>
+                <textarea id="cake-description" maxlength="500"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="file-input">Cake photo or video (up to 50 MB)</label>
+                <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" required />
+                <small>Supported: JPG, PNG, WebP, GIF, MP4 and WebM</small>
+              </div>
+              <button id="upload-btn" class="button button-light" type="submit">Upload to gallery</button>
+            </form>
+            <p id="upload-status" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="gallery-section" id="gallery">
+        <div class="section-wrap">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow eyebrow-purple"><span></span> Gallery inventory</p>
+              <h2>Current <em>gallery items.</em></h2>
+            </div>
+          </div>
+          <div id="gallery-container" class="gallery-grid"></div>
+          <p class="menu-note" id="gallery-empty">No cakes in the gallery yet.</p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

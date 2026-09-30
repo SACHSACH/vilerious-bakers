@@ -12,4 +12,4 @@ Once the first deployment completes, the public site is available at:
 
 ## Cake gallery
 
-The gallery uses Supabase for public media and authenticated uploads. Follow [GALLERY_SETUP.md](./GALLERY_SETUP.md) and run the SQL in [`supabase/setup.sql`](./supabase/setup.sql) before using the admin upload form.
+The gallery uses Supabase for public media and authenticated management. Follow [GALLERY_SETUP.md](./GALLERY_SETUP.md) and run the SQL in [`supabase/setup.sql`](./supabase/setup.sql) before using the private gallery manager at `/admin.html`.

@@ -34,11 +34,13 @@ const reviews = [
 let currentReview = 0;
 
 function setStatus(message, type = "") {
+  if (!statusMessage) return;
   statusMessage.textContent = message;
   statusMessage.className = type;
 }
 
 function renderGallery(items, client, isAdmin, loadGallery) {
+  if (!gallery || !galleryEmpty) return;
   gallery.replaceChildren();
   galleryEmpty.hidden = items.length > 0;
 
@@ -67,7 +69,7 @@ function renderGallery(items, client, isAdmin, loadGallery) {
     }
 
     card.append(media, details);
-    if (isAdmin) {
+    if (isAdmin && document.body.dataset.adminPage === "true") {
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "delete-btn";
       deleteBtn.type = "button";
@@ -112,11 +114,14 @@ function getFileExtension(file) {
 
 function setAdminState(session) {
   const signedIn = Boolean(session);
-  loginForm.hidden = signedIn;
-  adminSession.hidden = !signedIn;
-  uploadForm.hidden = !signedIn;
-  document.querySelector("#admin-email-display").textContent = session?.user.email ?? "";
-  if (!signedIn) loginForm.reset();
+  if (loginForm) {
+    loginForm.hidden = signedIn;
+    if (!signedIn) loginForm.reset();
+  }
+  if (adminSession) adminSession.hidden = !signedIn;
+  if (uploadForm) uploadForm.hidden = !signedIn;
+  const emailDisplay = document.querySelector("#admin-email-display");
+  if (emailDisplay) emailDisplay.textContent = session?.user.email ?? "";
 }
 
 function showReview(direction) {
@@ -131,8 +136,10 @@ function showReview(direction) {
 async function startGallery() {
   const config = window.VILERIOUS_SUPABASE_CONFIG;
   if (!config?.url || !config?.publishableKey || !window.supabase?.createClient) {
-    galleryEmpty.hidden = false;
-    galleryEmpty.textContent = "The cake gallery is temporarily unavailable.";
+    if (galleryEmpty) {
+      galleryEmpty.hidden = false;
+      galleryEmpty.textContent = "The cake gallery is temporarily unavailable.";
+    }
     setStatus("Supabase is not configured. Check config.js and reload.", "error");
     return;
   }
@@ -149,9 +156,11 @@ async function startGallery() {
 
     if (error) {
       console.error("Could not load the cake gallery:", error);
-      gallery.replaceChildren();
-      galleryEmpty.hidden = false;
-      galleryEmpty.textContent = "The cake gallery could not be loaded. Please try again later.";
+      if (gallery) gallery.replaceChildren();
+      if (galleryEmpty) {
+        galleryEmpty.hidden = false;
+        galleryEmpty.textContent = "The cake gallery could not be loaded. Please try again later.";
+      }
       setStatus(`Could not load gallery: ${error.message}`, "error");
       return;
     }
@@ -174,7 +183,7 @@ async function startGallery() {
   isAdmin = Boolean(sessionData?.session);
   setAdminState(sessionData?.session ?? null);
 
-  loginForm.addEventListener("submit", async (event) => {
+  loginForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = document.querySelector("#login-btn");
     button.disabled = true;
@@ -191,10 +200,10 @@ async function startGallery() {
       return;
     }
     loginForm.reset();
-    setStatus("Signed in. You can now upload gallery items.", "success");
+    setStatus("Signed in. You can now manage gallery items.", "success");
   });
 
-  document.querySelector("#logout-btn").addEventListener("click", async () => {
+  document.querySelector("#logout-btn")?.addEventListener("click", async () => {
     const { error } = await client.auth.signOut();
     if (error) {
       console.error("Could not sign out:", error);
@@ -204,7 +213,7 @@ async function startGallery() {
     setStatus("You have signed out.", "success");
   });
 
-  uploadForm.addEventListener("submit", async (event) => {
+  uploadForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = document.querySelector("#upload-btn");
     const file = document.querySelector("#file-input").files[0];
@@ -262,7 +271,7 @@ async function startGallery() {
     }
   });
 
-  await loadGallery();
+  if (gallery) await loadGallery();
 }
 
 if (menuToggle && siteNav) {
@@ -284,6 +293,7 @@ if (menuToggle && siteNav) {
 
 document.querySelector("#quote-prev")?.addEventListener("click", () => showReview(-1));
 document.querySelector("#quote-next")?.addEventListener("click", () => showReview(1));
-document.querySelector("#year").textContent = new Date().getFullYear();
+const year = document.querySelector("#year");
+if (year) year.textContent = new Date().getFullYear();
 
 startGallery();
