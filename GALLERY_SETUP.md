@@ -14,7 +14,7 @@ The private gallery manager at `https://sachsach.github.io/vilerious-bakers/admi
 
 ## 2. Create the gallery table and storage bucket
 
-Open **SQL Editor**, create a query, paste the contents of [`supabase/setup.sql`](./supabase/setup.sql), and run it. This creates the `cakes` table, a public-read `cakes` storage bucket, and row-level security policies. Visitors can view the gallery; uploads and deletes require a signed-in Supabase Auth user. If the gallery is already set up, rerun this SQL to add the delete permissions.
+Open **SQL Editor**, create a query, paste the contents of [`supabase/setup.sql`](./supabase/setup.sql), and run it. This creates the `cakes` table, a public-read `cakes` storage bucket, row-level security policies, and the authenticated `delete_cake` function used by the admin page. Visitors can view the gallery; uploads and deletes require a signed-in Supabase Auth user. Rerun this SQL after site updates that change the Supabase setup.
 
 ## 3. Upload and manage items
 
