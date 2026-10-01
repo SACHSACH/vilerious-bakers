@@ -80,12 +80,14 @@ function renderGallery(items, client, isAdmin, loadGallery) {
         deleteBtn.disabled = true;
         setStatus("Deleting item…");
         try {
-          const { data: deleted, error: rowError } = await client.rpc("delete_cake", {
-            p_cake_id: item.id,
-          });
+          const { data: deletedRows, error: rowError } = await client
+            .from("cakes")
+            .delete()
+            .eq("id", item.id)
+            .select("id");
           if (rowError) throw rowError;
-          if (!deleted) {
-            throw new Error("The gallery record was not found. Reload the page and try again.");
+          if (!deletedRows?.length) {
+            throw new Error("Supabase did not delete this gallery record. Confirm you are signed into the correct project and rerun supabase/setup.sql to apply the authenticated delete policy.");
           }
 
           const { error: storageError } = await client.storage

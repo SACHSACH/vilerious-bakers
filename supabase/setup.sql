@@ -40,28 +40,6 @@ create policy "Signed-in admins can delete cakes"
   to authenticated
   using (true);
 
-create or replace function public.delete_cake(p_cake_id bigint)
-returns boolean
-language plpgsql
-security definer
-set search_path = ''
-as $function$
-begin
-  if auth.uid() is null then
-    raise exception 'Authentication required'
-      using errcode = '42501';
-  end if;
-
-  delete from public.cakes
-  where id = p_cake_id;
-
-  return found;
-end;
-$function$;
-
-revoke all on function public.delete_cake(bigint) from public, anon;
-grant execute on function public.delete_cake(bigint) to authenticated;
-
 insert into storage.buckets (
   id,
   name,
@@ -98,5 +76,3 @@ create policy "Signed-in admins can remove cake media"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'cakes');
-
-notify pgrst, 'reload schema';
