@@ -14,7 +14,25 @@ The private gallery manager at `https://sachsach.github.io/vilerious-bakers/admi
 
 ## 2. Create the gallery table and storage bucket
 
-Open **SQL Editor**, create a query, paste the contents of [`supabase/setup.sql`](./supabase/setup.sql), and run it. This creates the `cakes` table, a public-read `cakes` storage bucket, row-level security policies, and the authenticated `delete_cake` function used by the admin page. Visitors can view the gallery; uploads and deletes require a signed-in Supabase Auth user. Rerun this SQL after site updates that change the Supabase setup.
+Open **SQL Editor**, create a query, paste the contents of [`supabase/setup.sql`](./supabase/setup.sql), and run it. Make sure the selected Supabase project matches the project URL in `config.js`. This creates the `cakes` table, a public-read `cakes` storage bucket, row-level security policies, and the authenticated `delete_cake` function used by the admin page; it also asks PostgREST to reload its schema cache. Visitors can view the gallery; uploads and deletes require a signed-in Supabase Auth user. Rerun this SQL after site updates that change the Supabase setup.
+
+If deletion reports that `public.delete_cake` cannot be found in the schema cache, run this in that same project's SQL Editor:
+
+```sql
+notify pgrst, 'reload schema';
+```
+
+If it still fails, verify the function exists in the selected project:
+
+```sql
+select n.nspname, p.proname, pg_get_function_arguments(p.oid) as arguments
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'delete_cake';
+```
+
+The result should show `delete_cake` with `p_cake_id bigint`. If there is no result, the setup SQL was not applied to the Supabase project configured by the site.
 
 ## 3. Upload and manage items
 

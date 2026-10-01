@@ -98,3 +98,5 @@ create policy "Signed-in admins can remove cake media"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'cakes');
+
+notify pgrst, 'reload schema';
